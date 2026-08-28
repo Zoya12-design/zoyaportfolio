@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Buttons with a Brain — Send Micro-interaction</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink: #211f1a;
+    --ink-soft: #57534a;
+    --paper: #efe9dc;
+    --paper-dim: #e3dcc9;
+    --card: #f6f2e7;
+    --stamp: #a23b2e;
+    --moss: #4b5842;
+    --line: #c9c0aa;
+    --paper-on-ink: #f3efe4;
+
+    /* motion tokens */
+    --dur-hover: 150ms;
+    --ease-hover: cubic-bezier(0.4, 0, 0.2, 1);
+    --dur-morph: 260ms;
+    --ease-morph: cubic-bezier(0.65, 0, 0.35, 1);
+    --dur-fade: 180ms;
+    --ease-fade: ease-out;
+    --dur-shake: 380ms;
+    --ease-shake: cubic-bezier(0.36, 0.07, 0.19, 0.97);
+    --dur-hold: 900ms;
+  }
+
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+  }
+  .wrap{ max-width: 720px; margin: 0 auto; padding: 64px 24px 100px; }
+
+  .eyebrow{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 16px;
+  }
+  h1{
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: clamp(30px, 5vw, 42px);
+    margin: 0 0 12px;
+    letter-spacing: -0.01em;
+  }
+  p.lede{ color: var(--ink-soft); max-width: 56ch; margin: 0 0 48px; font-size: 16px; }
+
+  h2{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--ink-soft);
+    margin: 0 0 22px;
+  }
+  h2::before{ content: "// "; color: var(--stamp); }
+
+  section{ padding: 40px 0; border-bottom: 1px solid var(--line); }
+  section:last-of-type{ border-bottom: none; }
+
+  /* ---------- demo stage ---------- */
+  .stage{
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 56px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+  }
+  .buttons-row{ display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: center; }
+
+  /* ---------- shared button system ---------- */
+  .btn{
+    position: relative;
+    width: 190px;
+    height: 52px;
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    font-size: 15px;
+  }
+  .btn:disabled{ cursor: default; }
+
+  /* the pill: a separate layer we scale with transform, never with width,
+     so the "narrowing to a circle" motion stays compositor-only */
+  .btn .pill{
+    position: absolute;
+    inset: 0;
+    border-radius: 26px;
+    background: var(--ink);
+    transform-origin: center center;
+    transform: scaleX(1);
+    transition: transform var(--dur-morph) var(--ease-morph),
+                background-color var(--dur-fade) var(--ease-fade);
+    will-change: transform;
+  }
+  .btn.secondary .pill{ background: var(--moss); }
+
+  .btn:not(:disabled):hover .pill,
+  .btn:not(:disabled):focus-visible .pill{
+    transform: scaleX(1) translateY(-2px);
+  }
+  .btn:not(:disabled):active .pill{
+    transform: scaleX(1) translateY(0) scale(0.98);
+  }
+
+  .btn:focus-visible{ outline: none; }
+  .btn:focus-visible .pill{
+    box-shadow: 0 0 0 3px var(--paper), 0 0 0 5.5px var(--stamp);
+  }
+
+  .btn[data-state="loading"] .pill,
+  .btn[data-state="success"] .pill{
+    transform: scaleX(0.274);
+  }
+  .btn[data-state="success"] .pill{ background: var(--moss); }
+  .btn.secondary[data-state="success"] .pill{ background: var(--moss); }
+  .btn[data-state="error"] .pill{ background: var(--stamp); transform: scaleX(1); }
+
+  /* content layers — cross-faded with opacity + a touch of scale, never swapped abruptly */
+  .btn .layer{
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--paper-on-ink);
+    opacity: 0;
+    transform: scale(0.85);
+    transition: opacity var(--dur-fade) var(--ease-fade),
+                transform var(--dur-fade) var(--ease-fade);
+    pointer-events: none;
+  }
+  .btn[data-state="idle"] .layer[data-for="idle"],
+  .btn[data-state="hover"] .layer[data-for="idle"]{ opacity: 1; transform: scale(1); }
+  .btn[data-state="loading"] .layer[data-for="loading"]{ opacity: 1; transform: scale(1); }
+  .btn[data-state="success"] .layer[data-for="success"]{ opacity: 1; transform: scale(1); }
+  .btn[data-state="error"] .layer[data-for="error"]{ opacity: 1; transform: scale(1); }
+
+  .spinner{
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 2.5px solid rgba(243,239,228,0.28);
+    border-top-color: var(--paper-on-ink);
+    animation: spin 800ms linear infinite;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+
+  .check{ width: 20px; height: 20px; }
+  .check path{
+    fill: none;
+    stroke: var(--paper-on-ink);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 24;
+    stroke-dashoffset: 24;
+  }
+  .btn[data-state="success"] .check path{
+    animation: draw 320ms var(--ease-fade) 60ms forwards;
+  }
+  @keyframes draw{ to{ stroke-dashoffset: 0; } }
+
+  .btn.shake{ animation: shake var(--dur-shake) var(--ease-shake); }
+  @keyframes shake{
+    10%, 90% { transform: translateX(-1px); }
+    20%, 80% { transform: translateX(2px); }
+    30%, 50%, 70% { transform: translateX(-4px); }
+    40%, 60% { transform: translateX(4px); }
+  }
+
+  /* reduced motion: real OS setting */
+  @media (prefers-reduced-motion: reduce){
+    .btn .pill, .btn .layer{ transition-duration: 1ms; }
+    .btn.shake{ animation: none; }
+    .spinner{ animation: pulse 900ms ease-in-out infinite; border-top-color: rgba(243,239,228,0.28); }
+    @keyframes pulse{ 50%{ opacity: 0.35; } }
+  }
+  /* reduced motion: manual toggle, for demoing without changing OS settings */
+  body[data-force-reduced-motion="true"] .btn .pill,
+  body[data-force-reduced-motion="true"] .btn .layer{ transition-duration: 1ms; }
+  body[data-force-reduced-motion="true"] .btn.shake{ animation: none; }
+  body[data-force-reduced-motion="true"] .spinner{
+    animation: pulse 900ms ease-in-out infinite;
+    border-top-color: rgba(243,239,228,0.28);
+  }
+
+  .btn[data-state="loading"],
+  .btn[data-state="success"]{ pointer-events: none; }
+
+  .sr-only{
+    position: absolute; width: 1px; height: 1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap;
+  }
+
+  /* ---------- controls ---------- */
+  .controls{
+    display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+  }
+  .ctrl-btn{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.03em;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    padding: 8px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: border-color 150ms ease, color 150ms ease;
+  }
+  .ctrl-btn:hover{ border-color: var(--ink); color: var(--ink); }
+  .ctrl-btn:focus-visible{ outline: 2.5px solid var(--stamp); outline-offset: 2px; }
+
+  .toggle-row{
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+
+  .notes p{ font-size: 15px; margin: 0 0 12px; max-width: 62ch; }
+  .notes ul{ margin: 0 0 18px; padding-left: 20px; }
+  .notes li{ margin-bottom: 8px; font-size: 15px; }
+  code{
+    font-family: 'IBM Plex Mono', monospace;
+    background: var(--paper-dim);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 13.5px;
+  }
+
+  footer{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    padding: 32px 0 0;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">FE-AA1 · Frontend AI Engineering · Week 6</div>
+  <h1>Buttons with a Brain</h1>
+  <p class="lede">A "Send message" button that narrates its own lifecycle — idle, hover, loading, success, error — entirely through transform and opacity. Nothing snaps.</p>
+
+  <section>
+    <h2>Demo</h2>
+    <div class="stage">
+      <div class="buttons-row">
+        <button class="btn" id="sendBtn" type="button" data-state="idle">
+          <span class="pill"></span>
+          <span class="layer" data-for="idle">Send message</span>
+          <span class="layer" data-for="loading" aria-hidden="true"><span class="spinner"></span></span>
+          <span class="layer" data-for="success" aria-hidden="true">
+            <svg class="check" viewBox="0 0 24 24"><path d="M4 12.5L9.5 18L20 6.5"/></svg>
+          </span>
+          <span class="layer" data-for="error">Retry</span>
+        </button>
+
+        <button class="btn secondary" id="saveBtn" type="button" data-state="idle">
+          <span class="pill"></span>
+          <span class="layer" data-for="idle">Save draft</span>
+          <span class="layer" data-for="loading" aria-hidden="true"><span class="spinner"></span></span>
+          <span class="layer" data-for="success" aria-hidden="true">
+            <svg class="check" viewBox="0 0 24 24"><path d="M4 12.5L9.5 18L20 6.5"/></svg>
+          </span>
+          <span class="layer" data-for="error">Retry</span>
+        </button>
+      </div>
+
+      <div class="controls">
+        <button class="ctrl-btn" id="forceSuccess" type="button">Force success</button>
+        <button class="ctrl-btn" id="forceError" type="button">Force error</button>
+        <button class="ctrl-btn" id="randomSend" type="button">Send (20% fail, random delay)</button>
+      </div>
+
+      <label class="toggle-row">
+        <input type="checkbox" id="reducedMotionToggle" />
+        Simulate <code>prefers-reduced-motion: reduce</code>
+      </label>
+
+      <span id="btnStatus" class="sr-only" aria-live="polite"></span>
+    </div>
+  </section>
+
+  <section class="notes">
+    <h2>Duration &amp; easing notes</h2>
+    <p>Two buttons, one motion system — same tokens, different accent color, to prove it's a system rather than a one-off.</p>
+    <ul>
+      <li><strong>Hover / focus — 150ms, <code>cubic-bezier(0.4,0,0.2,1)</code>.</strong> Fast enough to read as instantaneous feedback (under the ~200ms threshold where direct manipulation starts to feel laggy), so the button feels "alive" the moment you touch it.</li>
+      <li><strong>Idle ↔ loading/success morph — 260ms, <code>cubic-bezier(0.65,0,0.35,1)</code>.</strong> The pill "narrows to a circle" using <code>transform: scaleX()</code> on a separate layer, not <code>width</code> — so the shape change never triggers layout, only composition. 260ms is long enough to register as a deliberate shape change, short enough not to feel sluggish.</li>
+      <li><strong>Content cross-fade — 180ms opacity + scale, ease-out.</strong> Label, spinner, checkmark, and "Retry" are stacked layers that fade in/out together rather than swapping — so there's never a frame with no feedback at all.</li>
+      <li><strong>Success hold — 900ms</strong> before returning to idle. Long enough to actually read the checkmark before it disappears; shorter felt like a flicker in testing.</li>
+      <li><strong>Error shake — 380ms, <code>cubic-bezier(0.36,0.07,0.19,0.97)</code></strong> (a classic "impact and settle" curve) — one quick oscillation, not a cartoonish wobble, so it reads as "that didn't work" without being obnoxious.</li>
+    </ul>
+    <p><strong>Reduced motion:</strong> under <code>prefers-reduced-motion: reduce</code> (or the toggle above, for testing without changing OS settings), transitions collapse to near-instant, the shake is removed entirely, and the spinner switches from a rotating ring to a gentle opacity pulse. State is still always communicated — just without the motion.</p>
+    <p><strong>Interruption handling:</strong> the button is disabled (pointer-events off) for the duration of <code>loading</code> and <code>success</code>, so spam-clicking can't start a second request mid-flight. Each send gets a generation counter — if a newer request starts, any stale timeout from an older one is ignored rather than fighting over the button's state.</p>
+  </section>
+
+  <footer>Built for FlyRank FE-AA1 · CSS transitions + vanilla JS, no animation library.</footer>
+</div>
+
+<script>
+(function(){
+  const forceToggle = document.getElementById('reducedMotionToggle');
+  forceToggle.addEventListener('change', () => {
+    document.body.setAttribute('data-force-reduced-motion', forceToggle.checked ? 'true' : 'false');
+  });
+
+  function prefersReducedMotion(){
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
+           document.body.getAttribute('data-force-reduced-motion') === 'true';
+  }
+
+  function wireButton(btn, statusEl, labelWord){
+    let currentState = 'idle';
+    let generation = 0;
+
+    function setState(state){
+      currentState = state;
+      btn.dataset.state = state;
+      btn.disabled = (state === 'loading' || state === 'success');
+      const messages = {
+        loading: labelWord + ' in progress',
+        success: labelWord + ' succeeded',
+        error: labelWord + ' failed, press to retry'
+      };
+      if (statusEl) statusEl.textContent = messages[state] || '';
+      if (state === 'error' && !prefersReducedMotion()){
+        btn.classList.remove('shake');
+        void btn.offsetWidth; // restart the animation
+        btn.classList.add('shake');
+      }
+    }
+
+    function run(forceOutcome){
+      if (currentState === 'loading' || currentState === 'success') return;
+      const myGen = ++generation;
+      setState('loading');
+      const delay = 900 + Math.random() * 700;
+      window.setTimeout(() => {
+        if (myGen !== generation) return; // superseded — ignore stale callback
+        const willFail = forceOutcome === 'error'
+          ? true
+          : forceOutcome === 'success'
+            ? false
+            : Math.random() < 0.2;
+        if (willFail){
+          setState('error');
+        } else {
+          setState('success');
+          window.setTimeout(() => {
+            if (myGen !== generation) return;
+            setState('idle');
+          }, prefersReducedMotion() ? 350 : 900);
+        }
+      }, delay);
+    }
+
+    btn.addEventListener('click', () => run());
+    return run;
+  }
+
+  const status = document.getElementById('btnStatus');
+  const sendRun = wireButton(document.getElementById('sendBtn'), status, 'Send');
+  wireButton(document.getElementById('saveBtn'), null, 'Save');
+
+  document.getElementById('forceSuccess').addEventListener('click', () => sendRun('success'));
+  document.getElementById('forceError').addEventListener('click', () => sendRun('error'));
+  document.getElementById('randomSend').addEventListener('click', () => sendRun());
+})();
+</script>
+
+</body>
+</html>
