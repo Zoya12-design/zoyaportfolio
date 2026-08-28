@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zoya — Front-End &amp; AI Engineering</title>
+<meta name="description" content="Zoya — Computer Science undergraduate and Front-End AI Engineering intern. Projects, build log, and links." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink: #211f1a;
+    --ink-soft: #57534a;
+    --paper: #efe9dc;
+    --paper-dim: #e3dcc9;
+    --card: #f6f2e7;
+    --stamp: #a23b2e;
+    --moss: #4b5842;
+    --line: #c9c0aa;
+  }
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+  body{
+    margin:0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+  }
+  a{ color: inherit; }
+  .wrap{ max-width: 760px; margin: 0 auto; padding: 0 24px; }
+
+  /* subtle paper texture via layered gradients, no external image */
+  body::before{
+    content:"";
+    position: fixed; inset:0; pointer-events:none; z-index:0;
+    background-image:
+      radial-gradient(circle at 15% 10%, rgba(0,0,0,0.02) 0, transparent 40%),
+      radial-gradient(circle at 85% 80%, rgba(0,0,0,0.025) 0, transparent 40%);
+  }
+
+  header.hero{
+    position: relative;
+    padding: 72px 0 48px;
+    border-bottom: 1px solid var(--line);
+  }
+  .eyebrow{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+  .eyebrow .dot{
+    width:7px; height:7px; border-radius:50%;
+    background: var(--moss);
+    box-shadow: 0 0 0 3px rgba(75,88,66,0.15);
+  }
+  h1{
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: clamp(40px, 7vw, 64px);
+    line-height: 1.02;
+    margin: 0 0 18px;
+    letter-spacing: -0.01em;
+  }
+  .role{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin: 0 0 26px;
+  }
+  .role span{ color: var(--stamp); }
+  .positioning{
+    font-size: 18px;
+    max-width: 52ch;
+    color: var(--ink);
+    margin: 0;
+  }
+
+  /* the stamp — signature element */
+  .stamp{
+    position: absolute;
+    top: 60px;
+    right: 24px;
+    border: 2.5px solid var(--stamp);
+    color: var(--stamp);
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    padding: 10px 14px;
+    border-radius: 3px;
+    transform: rotate(6deg);
+    text-transform: uppercase;
+    opacity: 0.9;
+  }
+  @media (max-width: 640px){
+    .stamp{ position: static; display: inline-block; margin-top: 20px; transform: rotate(-2deg); }
+  }
+
+  section{ padding: 44px 0; border-bottom: 1px solid var(--line); }
+  section:last-of-type{ border-bottom: none; }
+
+  h2{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--ink-soft);
+    margin: 0 0 24px;
+  }
+  h2::before{ content: "// "; color: var(--stamp); }
+
+  .about p{ font-size: 16.5px; max-width: 62ch; margin: 0 0 14px; }
+
+  /* build log */
+  .log{ display: flex; flex-direction: column; gap: 14px; }
+  .log-entry{
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--moss);
+    border-radius: 4px;
+    padding: 16px 18px;
+    display: grid;
+    grid-template-columns: 84px 1fr;
+    gap: 14px;
+    align-items: start;
+  }
+  .log-entry .date{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    letter-spacing: 0.04em;
+    padding-top: 3px;
+  }
+  .log-entry .content strong{ font-size: 15.5px; }
+  .log-entry .content p{ margin: 5px 0 8px; font-size: 14.5px; color: var(--ink-soft); }
+  .tag{
+    display:inline-block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--moss);
+    border: 1px solid var(--moss);
+    border-radius: 20px;
+    padding: 2px 9px;
+    margin-right: 6px;
+  }
+  .log-entry a.repo-link{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    color: var(--stamp);
+    text-decoration: none;
+    border-bottom: 1px dashed var(--stamp);
+  }
+  .log-entry a.repo-link:hover{ opacity: 0.7; }
+
+  /* links */
+  .linklist{ display: flex; flex-direction: column; gap: 0; }
+  .linklist a{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 4px;
+    border-bottom: 1px solid var(--line);
+    text-decoration: none;
+    font-size: 17px;
+  }
+  .linklist a:first-child{ border-top: 1px solid var(--line); }
+  .linklist a .label{ display:flex; align-items:center; gap: 12px; }
+  .linklist a .label .k{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    width: 88px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .linklist a .arrow{
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--stamp);
+    transition: transform 0.15s ease;
+  }
+  .linklist a:hover .arrow{ transform: translateX(4px); }
+  .placeholder-note{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--stamp);
+  }
+
+  /* badge slot */
+  .badge-slot{
+    border: 1.5px dashed var(--line);
+    border-radius: 8px;
+    padding: 28px;
+    text-align: center;
+    color: var(--ink-soft);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+  }
+
+  footer{
+    padding: 40px 0 60px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    html{ scroll-behavior: auto; }
+    .linklist a .arrow{ transition: none; }
+  }
+
+  a:focus-visible, button:focus-visible{
+    outline: 2.5px solid var(--stamp);
+    outline-offset: 3px;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="hero">
+    <div class="eyebrow"><span class="dot"></span> Currently building at FlyRank — Week 5</div>
+    <h1>Zoya</h1>
+    <p class="role">Front-End AI Engineering Intern @ FlyRank <span>·</span> CS Undergrad, Sukkur IBA University</p>
+    <p class="positioning">I build interfaces, then go learn the infrastructure that makes them reachable — from accessible React components to the DNS record that gets this page to your browser.</p>
+    <div class="stamp">status: shipping</div>
+  </header>
+
+  <section class="about">
+    <h2>About</h2>
+    <p>Third-year Computer Science student based in Larkana, Sindh, Pakistan. My work spans full-stack development (Node.js, Express, MongoDB), data analysis (Python, Pandas, SQL), and — right now — front-end AI engineering at FlyRank, where I'm working through a track that pairs practical builds with the fundamentals: accessible components, deployment, hosting, and the web infrastructure underneath all of it.</p>
+    <p>This site is itself an assignment: built, hosted, and deployed as part of that track. Everything on it is something I can walk you through, file by file.</p>
+  </section>
+
+  <section class="log">
+    <h2>Build log</h2>
+    <div class="log">
+      <div class="log-entry">
+        <div class="date">2025</div>
+        <div class="content">
+          <strong>StudyMate AI</strong>
+          <p>An AI-assisted study companion — built as a prior FlyRank assignment.</p>
+          <span class="tag">AI</span><span class="tag">Full-stack</span>
+          <br><br>
+          <a class="repo-link" href="https://github.com/Zoya12-design/StudyMate-AI" target="_blank" rel="noopener noreferrer">github.com/Zoya12-design/StudyMate-AI →</a>
+        </div>
+      </div>
+      <div class="log-entry">
+        <div class="date">2025</div>
+        <div class="content">
+          <strong>TalentBridge — Recruitment &amp; Skill Matching Portal</strong>
+          <p>Multi-role platform with separate employer and job-seeker dashboards, a skill-matching algorithm, and MongoDB-driven candidate filtering.</p>
+          <span class="tag">Node.js</span><span class="tag">MongoDB</span>
+        </div>
+      </div>
+      <div class="log-entry">
+        <div class="date">2025</div>
+        <div class="content">
+          <strong>PhoneBook Pro</strong>
+          <p>Full-stack contact management app with user authentication, session management, and CRUD operations on a Mongoose-modeled schema.</p>
+          <span class="tag">Express.js</span><span class="tag">EJS</span><span class="tag">Auth</span>
+        </div>
+      </div>
+      <div class="log-entry">
+        <div class="date">2025</div>
+        <div class="content">
+          <strong>Terminal PhoneBook</strong>
+          <p>Terminal-based phonebook with a colored CLI, full CRUD, and MongoDB aggregation pipelines.</p>
+          <span class="tag">Python</span><span class="tag">PyMongo</span>
+        </div>
+      </div>
+      <div class="log-entry">
+        <div class="date">2026</div>
+        <div class="content">
+          <strong>Accessible component playground</strong>
+          <p>Modal, Tabs, and Disclosure built from scratch in React + TypeScript, following W3C ARIA Authoring Practices — no component libraries.</p>
+          <span class="tag">React</span><span class="tag">Accessibility</span>
+        </div>
+      </div>
+      <div class="log-entry">
+        <div class="date">2026</div>
+        <div class="content">
+          <strong>This site</strong>
+          <p>Static, hand-built, deployed on Netlify over HTTPS. Ships alongside a DNS walkthrough covering resolvers, records, and how a name becomes an address.</p>
+          <span class="tag">Infra</span><span class="tag">Hosting</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="links">
+    <h2>Find me</h2>
+    <div class="linklist">
+      <a href="https://linkedin.com/in/zoya-hulio" target="_blank" rel="noopener noreferrer">
+        <span class="label"><span class="k">LinkedIn</span> linkedin.com/in/zoya-hulio</span>
+        <span class="arrow">→</span>
+      </a>
+      <a href="https://github.com/Zoya12-design" target="_blank" rel="noopener noreferrer">
+        <span class="label"><span class="k">GitHub</span> github.com/Zoya12-design</span>
+        <span class="arrow">→</span>
+      </a>
+      <a href="resume.pdf" target="_blank" rel="noopener noreferrer">
+        <span class="label"><span class="k">CV</span> Download resume (PDF)</span>
+        <span class="arrow">→</span>
+      </a>
+      <a href="mailto:zoyahulio.bscsf24@iba-suk.edu.pk">
+        <span class="label"><span class="k">Get in touch</span> zoyahulio.bscsf24@iba-suk.edu.pk</span>
+        <span class="arrow">→</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="badge">
+    <h2>FlyRank capstone badge</h2>
+    <div class="badge-slot">
+      Reserved for the official FlyRank completion badge — added here once the capstone is approved.
+    </div>
+  </section>
+
+  <footer>
+    <span>© 2026 Zoya. Built by hand, deployed on a free host.</span>
+    <span>Last updated: Week 5, FlyRank track</span>
+  </footer>
+
+</div>
+
+</body>
+</html>
